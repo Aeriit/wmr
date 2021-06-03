@@ -2,12 +2,14 @@ import { resolve, dirname, relative } from 'path';
 import { promisify } from 'util';
 import * as kl from 'kolorist';
 import { promises as fs } from 'fs';
-import { hasDebugFlag } from '../lib/output-utils.js';
+import { hasDebugFlag, debug } from '../lib/output-utils.js';
 import { isFile } from '../lib/fs-utils.js';
 import { resolveModule } from './npm-plugin/resolve.js';
 
 const cjsDefault = m => ('default' in m ? m.default : m);
 let sass;
+
+const log = debug('sass');
 
 /**
  * @param {import('node-sass').Options} opts
@@ -41,10 +43,7 @@ async function renderSass(opts) {
 			}
 
 			if ((sassLib = await req(resolved))) {
-				if (hasDebugFlag()) {
-					// eslint-disable-next-line no-console
-					console.log('Using sass from ' + relative('.', resolved));
-				}
+				log('Using sass from ' + relative('.', resolved));
 				break;
 			}
 		}
@@ -68,12 +67,13 @@ async function renderSass(opts) {
 
 /**
  * Transform SASS files with node-sass.
- * @param {object} [opts]
+ * @param {object} opts
  * @param {boolean} [opts.production]
  * @param {boolean} [opts.sourcemap]
+ * @param {Record<string, string>} opts.alias
  * @returns {import('rollup').Plugin}
  */
-export default function sassPlugin({ production = false, sourcemap = false } = {}) {
+export default function sassPlugin({ production = false, sourcemap = false, alias }) {
 	return {
 		name: 'sass',
 		async transform(code, id) {
@@ -82,11 +82,28 @@ export default function sassPlugin({ production = false, sourcemap = false } = {
 
 			const result = await renderSass({
 				data: code,
-				includePaths: [dirname(id)],
+				includePaths: [dirname(id), ...Array.from(Object.values(alias))],
 				file: id,
+				sourceComments: true,
 				outputStyle: production ? 'compressed' : undefined,
-				sourceMap: sourcemap !== false
+				sourceMap: sourcemap !== false,
+				importer: [
+					async (url, prev, done) => {
+						console.log('alias url', url, prev);
+						let file = url;
+						if (!/^\.?\.\//.test(url)) {
+							const resolved = await this.resolve(url);
+							if (resolved && resolved.id) {
+								file = resolved.id + '.scss';
+							}
+						}
+						console.log('resolved ', file);
+						done({ file });
+					}
+				]
 			});
+
+			console.log(result);
 
 			return {
 				code: result.css,

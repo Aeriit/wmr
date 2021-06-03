@@ -547,7 +547,7 @@ export const TRANSFORMS = {
 
 		// We create a plugin container for each request to prevent asset referenceId clashes
 		const container = createPluginContainer(
-			[wmrPlugin({ hot: true }), sassPlugin(), wmrStylesPlugin({ cwd, hot: true, fullPath: true, alias })],
+			[wmrPlugin({ hot: true }), sassPlugin({ alias }), wmrStylesPlugin({ cwd, hot: true, fullPath: true, alias })],
 			{
 				cwd,
 				output: {
@@ -598,7 +598,7 @@ export const TRANSFORMS = {
 		let code = await fs.readFile(idAbsolute, 'utf-8');
 
 		if (isSass) {
-			code = await processSass(code, id);
+			code = await processSass(code, id, alias);
 		}
 
 		if (isModular) {
