@@ -757,6 +757,21 @@ describe('fixtures', () => {
 		});
 	});
 
+	describe('import.meta.url', () => {
+		it('should support importing via URL constructor', async () => {
+			await loadFixture('import-meta-url', env);
+			instance = await runWmrFast(env.tmp.path);
+			await getOutput(env, instance);
+
+			await withLog(instance.output, async () => {
+				await waitForPass(async () => {
+					const src = await env.page.$eval('img', el => el.getAttribute('src'));
+					expect(src).toMatch(/\/foo\/my-image\.svg$/);
+				});
+			});
+		});
+	});
+
 	describe('import assertions', () => {
 		it('should support .json assertion', async () => {
 			await loadFixture('import-assertions', env);

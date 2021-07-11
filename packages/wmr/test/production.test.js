@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import path from 'path';
 import { promises as fs } from 'fs';
-import { setupTest, teardown, runWmr, loadFixture, serveStatic, withLog } from './test-helpers.js';
+import { setupTest, teardown, runWmr, loadFixture, serveStatic, withLog, waitForPass } from './test-helpers.js';
 import { printCoverage, analyzeTrace } from './tracing-helpers.js';
 
 jest.setTimeout(30000);
@@ -390,6 +390,29 @@ describe('production', () => {
 				const output = await env.page.content();
 				expect(output).not.toMatch(/fail/i);
 				expect(output).toMatch(/foo bar/i);
+			});
+		});
+	});
+
+	describe('import.meta.url', () => {
+		it.only('should support importing via URL constructor', async () => {
+			await loadFixture('import-meta-env', env);
+			instance = await runWmr(env.tmp.path, 'build');
+
+			await withLog(instance.output, async () => {
+				expect(await instance.done).toEqual(0);
+
+				const { address, stop } = serveStatic(path.join(env.tmp.path, 'dist'));
+				cleanup.push(stop);
+
+				await env.page.goto(address, {
+					waitUntil: ['networkidle0', 'load']
+				});
+
+				await waitForPass(async () => {
+					const src = await env.page.$eval('img', el => el.getAttribute('src'));
+					expect(src).toMatch(/\/foo\/my-image\.svg$/);
+				});
 			});
 		});
 	});
