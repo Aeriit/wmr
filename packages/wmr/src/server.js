@@ -98,6 +98,11 @@ export default async function server({ cwd, root, overlayDir, middleware, http2,
 
 	app.ws = new WebSocketServer(app.server, '/_hmr');
 
+	// Custom middlewares should always come first, similar to plugins
+	if (middleware) {
+		app.use(...middleware);
+	}
+
 	if (compress) {
 		// @TODO: reconsider now that npm deps are compressed AOT
 		const threshold = compress === true ? 1024 : compress;
@@ -119,10 +124,6 @@ export default async function server({ cwd, root, overlayDir, middleware, http2,
 
 		next();
 	});
-
-	if (middleware) {
-		app.use(...middleware);
-	}
 
 	if (overlayDir) {
 		app.use(sirv(resolve(root || '', overlayDir), { dev: true }));

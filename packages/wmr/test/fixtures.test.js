@@ -1024,6 +1024,14 @@ describe('fixtures', () => {
 			const text = await env.page.evaluate(`fetch('/test').then(r => r.text())`);
 			expect(text).toEqual('it works');
 		});
+
+		it('should run custom middlewares first', async () => {
+			await loadFixture('middleware-custom', env);
+			instance = await runWmrFast(env.tmp.path);
+			await env.page.goto(await instance.address);
+			const text = await env.page.evaluate(`fetch('/test').then(r => r.text())`);
+			expect(text).toEqual('it works');
+		});
 	});
 
 	describe('node built-ins', () => {
