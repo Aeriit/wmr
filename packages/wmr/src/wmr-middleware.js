@@ -12,6 +12,7 @@ import { watch } from './lib/fs-watcher.js';
 import { matchAlias, resolveAlias } from './lib/aliasing.js';
 import { addTimestamp } from './lib/net-utils.js';
 import { mergeSourceMaps } from './lib/sourcemap.js';
+import { isFile } from './lib/fs-utils.js';
 
 const NOOP = () => {};
 
@@ -300,6 +301,8 @@ export default function wmrMiddleware(options) {
 			transform = TRANSFORMS.asset;
 		} else if (prefix || hasIdPrefix || isModule || /\.([mc]js|[tj]sx?)$/.test(file) || /\.(css|s[ac]ss)$/.test(file)) {
 			transform = TRANSFORMS.js;
+		} else if (await isFile(file)) {
+			transform = TRANSFORMS.asset;
 		} else {
 			transform = TRANSFORMS.generic;
 		}
@@ -456,10 +459,16 @@ export const TRANSFORMS = {
 			res.end();
 			return;
 		}
+
+		if (!res.hasHeader('Content-Type')) {
+			res.setHeader('Content-Type', 'text/plain');
+		}
+
 		res.writeHead(200, {
 			'Content-Length': stats.size,
 			'Last-Modified': stats.mtime.toUTCString()
 		});
+		logAssetTransform(`<-- ${kl.cyan(formatPath(id))} ${kl.dim(file)}[serve] ${res.getHeader('Content-Type')}`);
 		createReadStream(filename).pipe(res, { end: true });
 	},
 
