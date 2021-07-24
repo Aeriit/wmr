@@ -1,5 +1,13 @@
 # wmr
 
+## 3.4.2
+
+### Patch Changes
+
+- [`fd94818`](https://github.com/preactjs/wmr/commit/fd948183c78488379b4412595b176befa28a49ba) [#778](https://github.com/preactjs/wmr/pull/778) Thanks [@developit](https://github.com/developit)! - Avoid isIdentifier() crash on null/undefined values
+
+* [`50c7128`](https://github.com/preactjs/wmr/commit/50c7128d6c367a0d5d2de2a164b57ce07c0c53cb) [#774](https://github.com/preactjs/wmr/pull/774) Thanks [@marvinhagemeister](https://github.com/marvinhagemeister)! - Fix absolute imports starting with `/` not working in SASS
+
 ## 3.4.1
 
 ### Patch Changes
